@@ -7,7 +7,7 @@ Link to video of Lucius: https://clipchamp.com/watch/ei7PPMCW3DY
 
 This is a Python script that helps with Dutch case law research (rechtspraak.nl). 
 
-Users can add the ECLIs of the case law relevant for their research in the code. The API of rechtspraak.nl is used to retrieve the content of the ECLIs. 
+Users can add ECLIs of the case law relevant for their research in the code. The API of rechtspraak.nl is used to retrieve the content of the case law. 
 
 Three novelties of Lucius are the following:
 1. The user can search for multiple keywords in the same paragraph of the content (rather than across the entire text file), thereby making the search more specific;
