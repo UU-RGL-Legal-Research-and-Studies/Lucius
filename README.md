@@ -3,7 +3,7 @@ AI assistant for case law analysis (rechtspraak.nl)
 
 Link to video of Lucius: https://clipchamp.com/watch/ei7PPMCW3DY 
 
-# Legal Case Law Assistant
+# AI Assistant for Case Law Research
 
 This is a Python script that helps with Dutch case law research (rechtspraak.nl). 
 
