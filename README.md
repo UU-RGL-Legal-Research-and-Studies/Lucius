@@ -27,7 +27,3 @@ Three novelties of Lucius are the following:
 ## Contributing
 
 If you'd like to contribute, please fork the repository and use a feature branch. Pull requests are welcome.
-
-## License
-
-MIT
