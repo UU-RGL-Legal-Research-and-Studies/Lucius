@@ -1,0 +1,123 @@
+import requests
+import xml.etree.ElementTree as ET
+import openai
+import os
+
+# API Authentication
+openai.api_key = os.environ.get("OPEN_AI_KEY")
+
+# Globals, bevat ECLIs. Pas aan met eigen ECLIs
+ECLIs0 = ["ECLI:NL:GHAMS:2022:2684", "ECLI:NL:GHAMS:2022:1128", "ECLI:NL:GHAMS:2014:1315",
+         "ECLI:NL:HR:2021:1407", "ECLI:NL:PHR:2021:149",
+         "ECLI:NL:GHAMS:2021:3980", "ECLI:NL:GHAMS:2017:817", "ECLI:NL:GHAMS:2016:3583",
+         "ECLI:NL:GHAMS:2016:3587", "ECLI:NL:GHAMS:2016:4277", "ECLI:NL:GHAMS:2014:4421",
+         "ECLI:NL:GHAMS:2014:3201", "ECLI:NL:GHAMS:2014:1315", "ECLI:NL:GHAMS:2015:2775",
+         "ECLI:NL:GHAMS:2014:4393", "ECLI:NL:GHAMS:2015:642", "ECLI:NL:GHAMS:2019:3080",
+         "ECLI:NL:GHAMS:2016:3753", "ECLI:NL:GHAMS:2017:1666", "ECLI:NL:GHAMS:2016:2676",
+         "ECLI:NL:GHAMS:2014:5507", "ECLI:NL:GHAMS:2019:276", "ECLI:NL:GHAMS:2023:997",
+         "ECLI:NL:GHAMS:2015:3424", "ECLI:NL:GHAMS:2017:4969", "ECLI:NL:GHAMS:2019:3663",
+         "ECLI:NL:GHAMS:2017:2697", "ECLI:NL:PHR:2020:450", "ECLI:NL:GHAMS:2014:1293",
+         "ECLI:NL:GHAMS:2019:276"]
+ECLIs0.sort()
+ECLIs = ECLIs0
+ECLI_texts = {}
+
+
+# Definitions
+def api_request(ecli):
+    url = f"https://data.rechtspraak.nl/uitspraken/content?id={ecli}"
+    response = requests.get(url)
+    root = ET.fromstring(response.content)
+    return root
+
+
+def ecli_text():
+    search_terms = input("Lucius: U kunt de zoekterm(en) invoeren (gescheiden door een komma voor meerdere termen): ").split(',')
+
+    for ecli in ECLIs:
+        root = api_request(ecli)
+        found = False
+
+        for elem in root.iter():
+            text = elem.text
+            if text and all(term.lower() in text.lower() for term in search_terms):
+                ECLI_texts[ecli] = text
+                found = True
+                break
+
+        if not found:
+            ECLI_texts[ecli] = 'none'
+
+    # Toon de zoekresultaten aan de gebruiker
+    print("Lucius: Dit zijn de zoekresultaten:")
+    for ecli, text in ECLI_texts.items():
+        print(f"{ecli}: {text if text != 'none' else 'Geen resultaat'}")
+
+    remove_eclis = input("Lucius: Wilt u enkele zoekresultaten verwijderen? (ja/nee) ")
+    if remove_eclis.lower() == 'ja':
+        eclis_to_remove = input("Lucius: Voer de ECLIs in die u wilt verwijderen (gescheiden door komma's): ").split(
+            ',')
+        for ecli in eclis_to_remove:
+            if ecli in ECLI_texts:
+                ECLI_texts[ecli] = 'none'
+
+        # Toon de bijgewerkte lijst van ECLIs
+        print("Lucius: Dit zijn de bijgewerkte zoekresultaten:")
+        for ecli, text in ECLI_texts.items():
+            print(f"{ecli}: {text if text != 'none' else 'Geen resultaat'}")
+
+
+
+def chatbot_GPT(combined_text, footnotes):
+    prompt = input("Lucius: Welke vraag heeft u over de zoekresultaten? ")
+    messages = [
+        {"role": "system",
+         "content": f"Je bent een behulpzame AI assistent genaamd 'Lucius'. Voer de opdracht van de gebruiker uit" #opdracht
+                    f"op basis van de zoekresultaten in de volgende stijl:" #voorbeeld eigen stijl
+                    f"Het stuk moet {prompt} bevatten."}, #koppeling met verzoek gebruiker
+        {"role": "user", "content": combined_text}
+    ]
+    chat = openai.ChatCompletion.create(
+        model="gpt-4", messages=messages, temperature=0
+    )
+    reply = chat.choices[0].message.content
+    print(f"Lucius: {reply}")
+
+    for footnote, ecli in footnotes.items():
+        print(f"[{footnote}] {ecli}")
+
+
+def eenvoudige_chatbot():
+    print("Lucius: Hi, hoe kan ik je helpen met je rechtspraakonderzoek?\n")
+    print("Type '1' om te tonen welke ECLIs in de huidige database zitten;")
+    print("Type '2' om de database te doorzoeken naar zoektermen;")
+    print("Type '3' om te assisteren bij de zoekresultaten met AI;")
+    print("Type 'exit' om het gesprek te beëindigen.\n")
+    while True:
+        user_input = input("Gebruiker: ").lower()
+
+        if user_input == "exit":
+            break
+        elif user_input == '1':
+            print(f"Lucius: De ECLIs in de database zijn: {ECLIs}")
+        elif user_input == '2':
+            ecli_text()
+        elif user_input == '3':
+            if not ECLI_texts:
+                print("Lucius: Voer eerst stap '2' uit.")
+            else:
+                combined_text = ""
+                footnote_number = 1
+                footnotes = {}
+
+                for ecli, text in ECLI_texts.items():
+                    if text and text != 'none':
+                        combined_text += f"{text}\n"
+                        footnotes[footnote_number] = ecli
+                        combined_text += f"[{footnote_number}] "
+                        footnote_number += 1
+
+                chatbot_GPT(combined_text, footnotes)
+
+if __name__ == "__main__":
+    eenvoudige_chatbot()
