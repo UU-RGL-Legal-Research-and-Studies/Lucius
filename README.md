@@ -3,7 +3,7 @@ AI assistant for case law analysis (rechtspraak.nl)
 
 # Legal Case Law Assistant
 
-This is a Python script that helps with legal case law research of Dutch cases (rechtspraak.nl). 
+This is a Python script that helps with legal case law research (rechtspraak.nl). 
 
 Users can add the ECLIs relevant for their research in the code. The API of rechtspraak.nl is used to retrieve the content of the ECLIs. 
 
